@@ -30,12 +30,6 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-show = db.Table('Show',
-  db.Column('start_time',db.DateTime),
-  db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'), primary_key=True),
-  db.Column('venue_id',db.Integer, db.ForeignKey('Venue.id'), primary_key=True)
-)
-
 class Venue(db.Model):
     __tablename__ = 'Venue'
 
@@ -45,13 +39,13 @@ class Venue(db.Model):
     state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website = db.Column(db.String(120))
-    seeking_talent = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String)
+    image_link = db.Column(db.String(500), default='')
+    facebook_link = db.Column(db.String(120), default='')
+    website = db.Column(db.String(120), default='')
+    seeking_talent = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String, default='')
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
-    artists = db.relationship('Artist', secondary=show, backref=db.backref('venues', lazy=True))
+    shows = db.relationship('Show', backref='venue', lazy=True)
 
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
@@ -65,11 +59,20 @@ class Artist(db.Model):
     state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website = db.Column(db.String(120))
-    seeking_venue = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(120))
+    image_link = db.Column(db.String(500), default='')
+    facebook_link = db.Column(db.String(120), default='')
+    website = db.Column(db.String(120), default='')
+    seeking_venue = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(120), default='')
+    shows = db.relationship('Show', backref='artist', lazy=True)
+
+class Show(db.Model):
+  __tablename__ = 'Show'
+
+  id = db.Column(db.Integer, primary_key=True)
+  artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id', ondelete='CASCADE'), nullable=False)
+  venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id', ondelete='CASCADE'), nullable=False)
+  start_time = db.Column(db.DateTime, nullable=False)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -291,13 +294,13 @@ def show_artist(artist_id):
   data={
     "id": artist.id,
     "name": artist.name,
-    "genres": artist.genre,
+    "genres": artist.genres,
     "city": artist.city,
     "state": artist.state,
     "phone": artist.phone,
     "website": artist.website,
     "facebook_link": artist.facebook_link,
-    "seeking_venue": artist.seeking_talent,
+    "seeking_venue": artist.seeking_venue,
     "seeking_description": artist.seeking_description,
     "image_link": artist.image_link,
     "past_shows": [{
@@ -471,9 +474,29 @@ def create_shows():
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
-
+  error = False
+  try:
+    artist_id = request.form['artist_id']
+    venue_id = request.form['venue_id']
+    start_time = request.form['start_time']
+    show = Show(
+      artist_id=artist_id,
+      venue_id=venue_id,
+      start_time=start_time
+    )
+    db.session.add(show)
+    db.session.commit()
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if error:
+    flash('An error occurred. Show could not be listed.')
+  else:
   # on successful db insert, flash success
-  flash('Show was successfully listed!')
+    flash('Show was successfully listed!')
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Show could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
