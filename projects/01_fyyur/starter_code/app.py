@@ -48,6 +48,10 @@ class Venue(db.Model):
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
     shows = db.relationship('Show', backref='venue', lazy=True)
 
+    def Show_counter(self):
+      shows = Show.query.filter(Show.start_time>datetime.utcnow(), Show.venue_id==self.id).count()
+      print(shows)
+      return shows
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -110,27 +114,19 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  areas = Venue.query.distinct('city', 'state')
+  data=[]
+  for area in areas:
+    venues = Venue.query.filter(Venue.city == area.city, Venue.state == area.state).all()
+    info = {
+      "city": area.city,
+      "state": area.state,
+      "venues": [{
+        "id": venue.id,
+        "name": venue.name
+      }for venue in venues]
+    }
+    data.append(info)
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
@@ -138,13 +134,16 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search_term = request.form.get('search_term','')
+  venues = Venue.query.filter(Venue.name.ilike('%{}%'.format(search_term)))
+  count = Venue.query.filter(Venue.name.ilike('%{}%'.format(search_term))).count()
   response={
-    "count": 1,
+    "count": count,
     "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+      "id": venue.id,
+      "name": venue.name,
+      "num_upcoming_shows": Venue.Show_counter(venue),
+    }for venue in venues]
   }
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -191,7 +190,7 @@ def show_venue(venue_id):
       "start_time": show.start_time.strftime("%d/%m/%Y, %H:%M")
     }for show in upcoming_shows],
     "past_shows_count": past_shows_count,
-    "upcoming_shows_count": upcoming_shows_count,
+    "upcoming_shows_count": Venue.Show_counter(venue),
   }
   #data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=data)
@@ -261,16 +260,11 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
+  artists = Artist.query.all()
   data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
+    "id": artist.id ,
+    "name": artist.name,
+  } for artist in artists]
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -278,13 +272,16 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
+  search_term = request.form.get('search_term','')
+  artists = Artist.query.filter(Artist.name.ilike('%{}%'.format(search_term)))
+  count = Artist.query.filter(Artist.name.ilike('%{}%'.format(search_term))).count()
   response={
-    "count": 1,
+    "count": count,
     "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
+      "id": artist.id,
+      "name": artist.name,
       "num_upcoming_shows": 0,
-    }]
+    }for artist in artists]
   }
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -442,43 +439,15 @@ def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  
+  shows = Show.query.all()
   data=[{
-    "venue_id": 1,
-    "venue_name": "The Musical Hop",
-    "artist_id": 4,
-    "artist_name": "Guns N Petals",
-    "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    "start_time": "2019-05-21T21:30:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 5,
-    "artist_name": "Matt Quevedo",
-    "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    "start_time": "2019-06-15T23:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-01T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-08T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-15T20:00:00.000Z"
-  }]
+    "venue_id": show.venue_id,
+    "venue_name": show.venue.name,
+    "artist_id": show.artist_id,
+    "artist_name": show.artist.name,
+    "artist_image_link": show.artist.image_link,
+    "start_time": show.start_time.strftime("%d/%m/%Y, %H:%M")
+  } for show in shows]
   return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')
