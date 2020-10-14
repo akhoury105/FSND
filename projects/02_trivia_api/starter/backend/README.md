@@ -72,20 +72,67 @@ This README is missing documentation of your endpoints. Below is an example for 
 
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+GET '/categories/<int:category_id>/questions'
+POST '/questions'
+POST '/search'
+POST '/quizzes'
+DELETE '/questions/<int:question_id>'
+
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
+- Returns: An object with a single key, categories, that contains an object of id: category_string key:value pairs. 
 {'1' : "Science",
 '2' : "Art",
 '3' : "Geography",
 '4' : "History",
 '5' : "Entertainment",
 '6' : "Sports"}
+
+GET '/questions'
+- Fetches and paginates a dictionary of questions which contains the question text, answer text, category, difficulty, and id for each question. Also fetches a dictionary of categories, and the total number of questions.
+-Request Arguments: None
+-Returns: An object with the keys questions, total_questions, and categories. Categories is the same dictionary returned in /categories. The questions key returns a list of question objects:
+{'id': id,
+'question': question,
+'answer': answer,
+'category': category id,
+'difficulty': difficulty}
+
+GET '/categories/<int:category_id>/questions'
+- Fetches and paginates a dictionary of questions of the indicated category.
+-Request Arguments: None
+-Returns: An object containing a list of questions like in /questions along with the total number of questions retreived.
+
+POST '/questions'
+-Submits a new question to the database.
+-Request Arguments: A JSON object with key:value pairs like:
+{'question': 'question text',
+'answer': 'answer text',
+'category': '2',
+'difficulty': '1'}
+-Returns: An object containing the new question id, a paginated list of question objects like in /questions, and the total number of questions.
+
+POST '/search'
+-Search the database for a question containing the queried text.
+-Request Arguments: a JSON object with the text to search the database.
+-Returns: An object containing a list of questions like /questions, and the total number of questions found matching the query.
+
+POST '/quizzes'
+-Fetches a random question from the database based on a category and any previous questions that had been asked.
+-Request Arguments: a JSON object with values for the keys 'previous_questions' and 'quiz_category'
+{'previous_questions':[1],
+'quiz_category':{
+    'type': 'Geography',
+    'id': '3'}}
+-Returns: A single object with key 'question' that contains a question formatted like the objects in /questions.
+
+DELETE '/questions/<int:question_id>'
+-Deletes a question from the database.
+-Request Arguments: None
+-Returns: the id of the question deleted.
 
 ```
 
