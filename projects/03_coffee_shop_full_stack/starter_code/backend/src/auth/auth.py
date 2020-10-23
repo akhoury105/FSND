@@ -32,12 +32,12 @@ class AuthError(Exception):
 '''
 def get_token_auth_header():
     # Attempts to get header, raises AuthError if no header
-   if 'Authorization' not in request.headers:
-       raise AuthError({
+    if 'Authorization' not in request.headers:
+        raise AuthError({
             'code': 'authorization_header_missing',
             'description': 'Authorization header is expected.'
         }, 401)
-    auth_header = request.headers['Authorization']
+    auth_header = request.headers.get('Authorization', None)
 
     # Splits bearer and token
     header_parts = auth_header.split(' ')
@@ -149,7 +149,7 @@ def verify_decode_jwt(token):
             }, 400)
 
 '''
-@TODO implement @requires_auth(permission) decorator method
+@DONE implement @requires_auth(permission) decorator method
     @INPUTS
         permission: string permission (i.e. 'post:drink')
 
