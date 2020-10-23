@@ -20,7 +20,7 @@ db_drop_and_create_all()
 
 ## ROUTES
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     GET /drinks
         it should be a public endpoint
         it should contain only the drink.short() data representation
@@ -29,19 +29,18 @@ db_drop_and_create_all()
 '''
 @app.route('/drinks', methods=['GET'])
 def get_drinks():
-    selection = Drink.query.all()
-    if len(selection) == 0:
-        abort(422)
-    drinks = [selection.short() for drink in selection]
-    if len(drinks) == 0:
+    try:
+        selection = Drink.query.all()
+        drinks = [selection.short() for drink in selection]
+        return jsonify({
+            'success': True,
+            'drinks': drinks
+        })
+    except:
         abort(404)
-    return jsonify({
-        'success': True,
-        'drinks': drinks
-    })
         
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     GET /drinks-detail
         it should require the 'get:drinks-detail' permission
         it should contain the drink.long() data representation
@@ -50,17 +49,16 @@ def get_drinks():
 '''
 @app.route('/drinks', methods=['GET'])
 @requires_auth(permission='get:drink-detail')
-def get_drinks():
-    selection = Drink.query.all()
-    if len(selection) == 0:
-        abort(422)
-    drinks = [selection.long() for drink in selection]
-    if len(drinks) == 0:
+def get_drinks_detailed():
+    try:
+        selection = Drink.query.all()
+        drinks = [selection.long() for drink in selection]
+        return jsonify({
+            'success': True,
+            'drinks': drinks
+        })
+    except:
         abort(404)
-    return jsonify({
-        'success': True,
-        'drinks': drinks
-    })
 
 '''
 @TODO implement endpoint
@@ -71,6 +69,14 @@ def get_drinks():
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=['POST'])
+@requires_auth(permission='post:drinks')
+def post_drinks():
+
+    return jsonify({
+        'success': True,
+        'drinks': drinks
+    })
 
 
 '''
