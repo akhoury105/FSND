@@ -68,12 +68,14 @@ def get_token_auth_header():
     return true otherwise
 '''
 def check_permissions(permission, payload):
+    # Checks to see if permission was included in the token.
     if 'permissions' not in payload:
         raise AuthError({
             'code': 'invalid_claims',
             'description': 'Permissions not included in JWT'
         }, 400)
 
+    # Checks to see that the permission required matches the permission in the payload.
     if permission not in payload['permissions']:
         raise AuthError({
             'code': 'unauthorized',
@@ -95,6 +97,7 @@ def check_permissions(permission, payload):
 
     !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
 '''
+# Boiler plate token authentication.
 def verify_decode_jwt(token):
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
@@ -158,6 +161,7 @@ def verify_decode_jwt(token):
     it should use the check_permissions method validate claims and check the requested permission
     return the decorator which passes the decoded payload to the decorated method
 '''
+# @decorator for checking authorization and authenticating tokens.
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
         @wraps(f)
