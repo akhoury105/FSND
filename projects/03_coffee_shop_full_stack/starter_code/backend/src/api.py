@@ -29,15 +29,12 @@ db_drop_and_create_all()
 '''
 @app.route('/drinks', methods=['GET'])
 def get_drinks():
-    try:
-        selection = Drink.query.all()
-        drinks = [selection.short() for drink in selection]
-        return jsonify({
-            'success': True,
-            'drinks': drinks
-        })
-    except:
-        abort(404)
+    selection = Drink.query.all()
+    drinks = [drink.short() for drink in selection]
+    return jsonify({
+        'success': True,
+        'drinks': drinks
+    })
         
 '''
 @DONE implement endpoint
@@ -47,12 +44,12 @@ def get_drinks():
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
-@app.route('/drinks', methods=['GET'])
+@app.route('/drinks-detail', methods=['GET'])
 @requires_auth(permission='get:drink-detail')
 def get_drinks_detailed(payload):
     try:
         selection = Drink.query.all()
-        drinks = [selection.long() for drink in selection]
+        drinks = [drink.long() for drink in selection]
         return jsonify({
             'success': True,
             'drinks': drinks
