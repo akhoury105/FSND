@@ -29,12 +29,15 @@ db_drop_and_create_all()
 '''
 @app.route('/drinks', methods=['GET'])
 def get_drinks():
-    selection = Drink.query.all()
-    drinks = [drink.short() for drink in selection]
-    return jsonify({
-        'success': True,
-        'drinks': drinks
-    })
+    try:
+        selection = Drink.query.all()
+        drinks = [drink.short() for drink in selection]
+        return jsonify({
+            'success': True,
+            'drinks': drinks
+        })
+    except:
+        abort(422)
         
 '''
 @DONE implement endpoint
@@ -55,10 +58,10 @@ def get_drinks_detailed(payload):
             'drinks': drinks
         })
     except:
-        abort(404)
+        abort(422)
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     POST /drinks
         it should create a new row in the drinks table
         it should require the 'post:drinks' permission
@@ -69,18 +72,21 @@ def get_drinks_detailed(payload):
 @app.route('/drinks', methods=['POST'])
 @requires_auth(permission='post:drinks')
 def post_drinks(payload):
-    body = request.get_json()
-    title = body.get('title')
-    recipe = body.get('recipe')
-    if not body:
-        abort(422)
-    drink = Drink(title=title, recipe=json.dumps(recipe))
-    drink.insert()
+    try:
+        body = request.get_json()
+        title = body.get('title')
+        recipe = body.get('recipe')
+        if not body:
+            abort(404)
+        drink = Drink(title=title, recipe=json.dumps(recipe))
+        drink.insert()
 
-    return jsonify({
-        'success': True,
-        'drinks': drink.long()
-    })
+        return jsonify({
+            'success': True,
+            'drinks': drink.long()
+        })
+    except:
+        abort(422)
 
 '''
 @TODO implement endpoint
