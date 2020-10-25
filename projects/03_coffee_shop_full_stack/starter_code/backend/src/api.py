@@ -89,7 +89,7 @@ def post_drinks(payload):
         abort(422)
 
 '''
-@TODO implement endpoint
+@Done implement endpoint
     PATCH /drinks/<id>
         where <id> is the existing model id
         it should respond with a 404 error if <id> is not found
@@ -135,6 +135,25 @@ def edit_drinks(payload, id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks/<int:id>', methods=['DELETE'])
+@requires_auth(permission='delete:drinks')
+def delete_drinks(payload, id):
+    # Get the drink by the id.
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+
+    # Abort if we don't have a drink.
+    if drink == None:
+        abort(404)
+
+    # Delete the drink.
+    try:
+        drink.delete()
+        return jsonify({
+            'success': True,
+            'delete': id
+        })
+    except:
+        abort(422)
 
 
 ## Error Handling
