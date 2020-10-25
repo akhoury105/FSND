@@ -49,7 +49,7 @@ def get_drinks():
 '''
 @app.route('/drinks', methods=['GET'])
 @requires_auth(permission='get:drink-detail')
-def get_drinks_detailed():
+def get_drinks_detailed(payload):
     try:
         selection = Drink.query.all()
         drinks = [selection.long() for drink in selection]
@@ -71,13 +71,19 @@ def get_drinks_detailed():
 '''
 @app.route('/drinks', methods=['POST'])
 @requires_auth(permission='post:drinks')
-def post_drinks():
+def post_drinks(payload):
+    body = request.get_json()
+    title = body.get('title')
+    recipe = body.get('recipe')
+    if not body:
+        abort(422)
+    drink = Drink(title=title, recipe=json.dumps(recipe))
+    drink.insert()
 
     return jsonify({
         'success': True,
-        'drinks': drinks
+        'drinks': drink.long()
     })
-
 
 '''
 @TODO implement endpoint
